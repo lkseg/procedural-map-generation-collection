@@ -1,0 +1,2 @@
+option('compile_tests', type: 'boolean', value: 'false')
+option('debug_checks', type: 'boolean', value: 'true')

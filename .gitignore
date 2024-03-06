@@ -1,0 +1,6 @@
+.vscode/
+*.py
+*.ini
+build/
+**/tests.cpp
+

@@ -1,0 +1,1 @@
+src += files('main.cpp', 'image.cpp', 'asset.cpp', 'renderer.cpp')
