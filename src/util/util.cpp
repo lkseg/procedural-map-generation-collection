@@ -34,11 +34,11 @@ void _internal_crash(const std::string &file_name, int line, const std::string &
 
 
 
-bool approx(f32 a, f32 b) {
-	return abs(a-b) < F32_EPS;
+bool approx(f32 a, f32 b, f32 delta) {
+	return abs(a-b) < delta;
 }
-bool approx(f64 a, f64 b) {
-	return abs(a-b) < F64_EPS;
+bool approx(f64 a, f64 b, f64 delta) {
+	return abs(a-b) < delta;
 }
 
 

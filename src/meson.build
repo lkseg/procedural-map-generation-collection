@@ -1,1 +1,1 @@
-src += files('main.cpp', 'image.cpp', 'asset.cpp', 'renderer.cpp')
+src += files('main.cpp', 'image.cpp', 'asset.cpp', 'renderer.cpp', 'astar.cpp')

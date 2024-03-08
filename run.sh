@@ -24,6 +24,7 @@ case $1 in
     "test")
         echo "Test"
         meson configure build -Dcompile_tests=true
+        meson setup --optimization=0 $BUILD_DIR
         meson test -C build --print-errorlogs --verbose  # --wrap='valgrind'
         exit 0
         ;;    

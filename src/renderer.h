@@ -36,6 +36,11 @@ struct Gl_State {
     u32 framebuffer;
 };
 
+struct Basic_Mesh {
+    Array<Vec3> vertices = {};
+    Array<u32> indices = {};
+};
+
 extern Gl_State gl_state;
 
 void init_renderer();
@@ -48,6 +53,7 @@ Framebuffer make_framebuffer_target(Vec2i = Vec2i{500, 500});
 Render_Object make_render_object();
 Render_Object make_render_object(Array<Vec3> &, Array<u32> &);
 
+void push_line(Basic_Mesh &, Vec2 a, Vec2 b, f32 width);
 void push_line(Array<Vec3> &, Array<u32> &, Vec2 a, Vec2 b, f32 width);
 void make_line(Buffer<Vec3, 6> &buffer, Vec2 a, Vec2 b, f32 width);
 

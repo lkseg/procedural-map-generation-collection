@@ -10,7 +10,7 @@ const Color Color::White = Color{255,255,255,255};
 const Color Color::Black = Color{0,0,0,255};
 
 
-Maybe<Texture> load_texture(const String &file) {
+Maybe<Texture> load_texture_from_file(const String &file) {
     const String DIR = "./assets/textures/";
     int image_width = 0;
     int image_height = 0;

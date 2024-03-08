@@ -1,3 +1,5 @@
+// THIS FILE HAS BEEN CHANGED
+
 // linalg.h - 2.2 - Single-header public domain linear algebra library
 //
 // The intent of this library is to provide the bulk of the functionality
@@ -724,6 +726,7 @@ template<class T> linalg::mat<T,4,4> linalg::frustum_matrix(T x0, T x1, T y0, T 
 using namespace linalg::ostream_overloads;
 
 typedef linalg::vec<float, 2> Vec2;
+typedef linalg::vec<double, 2> Vec2d;
 typedef linalg::vec<int32_t, 2> Vec2i;
 
 typedef linalg::vec<float, 3> Vec3;
@@ -864,5 +867,30 @@ inline Vec3 vec3(const Vec2 &v) {
 }
 
 
+// https://en.wikipedia.org/wiki/Circumcircle
+inline Vec2 circumcenter(Vec2 a, Vec2 b, Vec2 c) {
+    f32 d = 2.f*(a.x*(b.y-c.y)+b.x*(c.y-a.y)+c.x*(a.y-b.y));
+    f32 a2 = (a.x*a.x+a.y*a.y);
+    f32 b2 = (b.x*b.x+b.y*b.y);
+    f32 c2 = (c.x*c.x+c.y*c.y);
+    f32 x = a2*(b.y-c.y) + b2*(c.y-a.y)+c2*(a.y-b.y);
+    f32 y = a2*(c.x-b.x) + b2*(a.x-c.x)+c2*(b.x-a.x);
+    return Vec2(x,y)/d;
+}
+
+inline Pair<Vec2, f32> circumcenter_radius(Vec2 a, Vec2 b, Vec2 c) {
+    auto center = circumcenter(a, b, c);
+    return {center, distance(center, a)};
+    
+    /* if_debug {
+        auto fa = distance(center, a);
+        auto fb = distance(center, b);
+        auto fc = distance(center, c);
+        if(!(approx(fa, fb, 0.1f) && approx(fb, fc, 0.1f))) {
+            print(center, fa, fb, fc, a, b, c);
+            return {center, distance(center, a)};
+        }
+    } */    
+}
 // inline bool operator!=(const Vec2i &a, const Vec2i &b) { return any(nequal(a, b));}
 #endif

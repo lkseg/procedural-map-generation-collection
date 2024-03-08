@@ -21,7 +21,7 @@ namespace gui = ImGui;
 #include "asset.h"
 #include "renderer.h"
 #include "slice.h"
-
+#include "astar.h"
 
 
 static void glfw_error_callback(int error, const char *msg) {
@@ -608,12 +608,263 @@ Texture make_noise_image(Noise_Generator &gen, bool use_colors = false) {
     }
     return *load_texture((byte *)&gen.colors[0], gen.size.x, gen.size.y);    
 }
+
+struct Roguelike_Map_Path {
+    Vec2i size = {10, 10};
+    Array<Vec2> points;
+    Map<i32, Set<i32>> edges;
+    isize iter_count = 0;
+    Astar graph;
+    void set_size(Vec2i v) {
+        size = v;
+        // +2 Start and End, +3 super triangle
+        points.resize(size.x * size.y + 2 + 3);
+    }
+    isize end_point() {
+        return points.size()-5;
+    }
+    Pair<i32, i32> start_end() {
+        return {points.size()-5, points.size()-4};
+    }
+    void set_start_end(Vec2 start, Vec2 end) {
+        points[points.size()-5] = start;
+        points[points.size()-4] = end;
+    }
+    Roguelike_Map_Path() {
+        set_size(size);
+    }
+};
+
+struct Triangle {
+    Triangle() {}
+    Triangle(i32 x, i32 y, i32 z) {
+        Buffer<i32, 3> arr = {x,y,z};
+        std::sort(arr.begin(), arr.end());
+        a = arr[0];
+        b = arr[1];
+        c = arr[2];
+        assert(a < b && b < c);
+    }
+    
+    bool has_edge(const Vec2i &v) {
+        assert(v.x != v.y);
+        return (v.x == a || v.x == b || v.x == c) && (v.y == a || v.y == b || v.y == c);
+        // return (v.x == a || v.x == b || v.x == c) || (v.y == a || v.y == b || v.y == c);
+    }
+    inline bool _con(i32 p, const Triangle &f) {
+        return p != f.a && p != f.b && p != f.c;
+    }
+    bool not_contains(const Triangle &f) {        
+        return _con(a, f) && _con(b, f) && _con(c, f);
+    }
+    inline bool valid() {
+        return a < b && b < c;
+    }
+    i32 a, b, c;
+};
+bool operator==(const Triangle &a, const Triangle &b) {
+    assert(a.a < a.b && a.b < a.c);
+    assert(b.a < b.b && b.b < b.c);
+    return a.a == b.a && a.b == b.b && a.c == b.c;
+}
+std::ostream &operator<<(std::ostream &os, const Triangle &t) {
+    os << "{" << t.a << ", " << t.b << ", "<< t.c << "}";
+    return os;
+}
+template<>
+struct std::hash<Triangle> {
+    std::size_t operator()(const Triangle &t) const {
+        assert(t.a < t.b && t.b < t.c);
+        return (usize(t.a)<<2)|(usize(t.b)<<1)|(usize(t.c)<<0);
+    }
+};
+inline Vec2i spoint(const i32 &a, const i32 &b) {
+    if(a < b) return {a,b};
+    return {b, a};
+}
+
+Array<Triangle> bowyer_watson(Array<Vec2> &points, isize max_iter = -1) {
+    //sort(points.begin(), points.end(), [](Vec2 a, Vec2 b)->bool {
+    //    if(a.y == b.y) return a.x < b.x;
+    //        return a.y < b.y;
+    //});
+    const Vec2 M = {0.5, 0.5};
+
+    const i32 N = points.size()-3;
+    const f32 SD = 3.;
+    points[points.size()-3] = (M + Vec2(SD,-SD));
+    points[points.size()-2] = (M + Vec2(0,SD));
+    points[points.size()-1] = (M + Vec2(-SD,-SD));
+    
+    auto super = Triangle{N, N+1, N+2};
+    Array<Triangle> open = {super};
+    // Map<Vec2i, i32> edges;
+    Array<Triangle> bad;
+    auto has_edge = [&bad](Vec2i edge, Triangle exclude) -> bool {
+        ForRange(i, 0, bad.size()) {
+            if(bad[i].has_edge(edge) && bad[i] != exclude) return true;
+        }
+        return false;
+    };
+    isize iteration_count = max_iter;
+    if(max_iter < 0 || max_iter > points.size()-3) {
+        iteration_count = points.size()-3;
+    }
+    ForRange(ip, 0, iteration_count) {
+        auto p = points[ip];
+        bad.clear();
+        for(const auto &t: open) {
+            auto [center, r] = circumcenter_radius(points[t.a], points[t.b], points[t.c]);
+            if(distance(center, p) <= r) {
+                bad.push_back(t);
+            }
+        }
+        Array<Vec2i> poly;
+        for(const auto &t: bad) {
+            Buffer<Vec2i, 3> tri_edges = {spoint(t.a, t.b), spoint(t.b, t.c), spoint(t.c, t.a)};
+            for(auto &e: tri_edges) {                
+                if(!has_edge(e, t)) {
+                    poly.push_back(e);
+                }
+            }
+        }
+        for(const auto &t: bad) {
+            auto iter = find(open.begin(), open.end(), t);
+            if(iter == open.end()) continue;
+            open.erase(iter);
+            
+        }
+        for(auto &e: poly) {
+            auto t = Triangle(e.x, e.y, ip);
+            // if(!t.valid()) continue;
+            open.push_back(t);
+        }
+    }
+    
+    Array<Triangle> res;
+    // @todo enable option to see for debug
+    // res = open    
+    // Disabled for testing
+    for(auto &t: open) {
+        if(t.not_contains(super)) {
+            res.push_back(t);
+        }
+    }
+    // ForRange(i, 0, res.size()) ForRange(j, i+1, res.size()) assert(res[i] != res[j]);
+        
+    return res;
+}
+
+void make_roguelike_map_path(Roguelike_Map_Path &self, u64 seed = 0) {
+    set_global_random_engine_seed(seed);    
+    ++self.iter_count;
+
+    Vec2 step = Vec2(1,1)/Vec2(self.size);
+    int c = 0;
+    f32 phi = (1. + sqrt(5.))/2.;
+    f32 radius = 0.40;
+    const f32 rval = 0.005;
+
+    ForRange(i, 0, self.end_point()) {
+        f32 angle = TAU * (f32(i)/phi);
+        f32 r = sqrt(i)/sqrt(self.points.size());
+        f32 x = radius*r*cos(angle);
+        f32 y = radius*r*sin(angle);
+        Vec2 pos = Vec2(0.5, 0.5) + Vec2(x,y);
+        self.points[i] = {pos.x + (f32)randf_range(-rval, rval), pos.y + (f32) randf_range(-rval, rval)};
+    }
+    self.set_start_end({0.5, 0.95}, {0.5, 0.05});
+    
+    auto tris = bowyer_watson(self.points, -1*self.iter_count);
+
+
+    Array<Vec2> points = {};
+    self.edges.clear();
+    for(auto &t: tris) {
+        self.edges[t.a].insert(t.b);
+        self.edges[t.b].insert(t.c);
+        self.edges[t.c].insert(t.a);
+    }
+    // Transform to astar graph
+    Astar astar;
+    astar.nodes.resize(self.points.size());
+    for(int i = 0; i < self.points.size(); ++i) {
+        auto &it = self.points[i];
+        astar.nodes[i] = Astar_Node{.uid = i, .adj = {}, .point = {it.x, it.y}};
+    }
+    for(auto &[a, to]: self.edges){
+        for(auto &b: to) {
+            connect(astar, a, b);
+            connect(astar, b, a);
+        }
+    }
+    self.graph = move(astar);
+}
+void draw_roguelike_map_path(Framebuffer &fb, Roguelike_Map_Path &self, Shader *shader, isize max_path_count = 4) {    
+    fb.modulate = color_vec4(Color(156, 107, 53));
+    use_framebuffer(fb);
+
+    const Vec2 step = Vec2(1, 1)/Vec2(self.size);
+    const Vec2 scale = 0.25f*Vec2(1, 1)/Vec2(self.size);
+    
+    
+    Basic_Mesh mesh;
+    Buffer<Texture, 3> icons = {get_texture("none"), get_texture("fight"), get_texture("treasure")};
+    auto pair = self.start_end();
+    
+    auto &nodes = self.graph.nodes;
+    Shader *image_shader = get_shader("default");
+    ForRange(ipath, 0, max_path_count) {
+        auto path = get_path(self.graph, pair.first, pair.second, true);
+        if(path.size() <= 0) break;
+        ForRange(i, 0, path.size()-1) {
+            push_line(mesh, nodes[path[i]].point, nodes[path[i+1]].point, 0.002);
+        }
+        ForRange(i, 1, path.size()-1) {
+            auto &node = nodes[path[i]];
+            node.disabled = true;
+            auto r = randf_range(0,1);
+            isize ricon;
+            if(r <= 0.1) {
+                ricon = 2;
+            } else if(r <= 0.70) {
+                ricon = 1;
+            } else {
+                ricon = 0;
+            }
+            draw_texture(fb, node.point, 2.f*scale, Color::White, image_shader, &icons[ricon]);
+        }    
+    }
+    
+    if(false) {
+        for(auto &node: self.graph.nodes) {
+            for(auto &adj: node.adj) {
+                // print(adj->uid, adj->point);
+                push_line(mesh, node.point, adj->point, 0.002);
+            }            
+        }
+    }
+    
+    if(mesh.vertices.size() > 0) {
+        auto ro =  make_render_object(mesh.vertices, mesh.indices);
+        draw_texture(ro, fb, {0.0, 0.0}, {1,1}, Color(0, 0, 0), shader);
+        destroy(ro);
+    }
+    
+    draw_texture(fb, nodes[pair.first].point, 2.f*scale, Color::White, image_shader, &get_texture("start"));
+    draw_texture(fb, nodes[pair.second].point, 2.f*scale, Color::White, image_shader, &get_texture("boss"));
+    use_main_framebuffer();
+}
 int main(int, char **) {
     
     auto window = init_glfw_and_imgui();
     release_assert(window);
     
-    // *load_texture("bm.png");
+    load_texture("sword.png", "fight");
+    load_texture("gold_pile.png", "treasure");
+    load_texture("none.png", "none");
+    load_texture("boss.png", "boss");
+    load_texture("door.png", "start");
     
     load_shader("default");
     auto basic_shader = load_shader("basic");
@@ -646,6 +897,11 @@ int main(int, char **) {
 
     auto noise = Noise_Generator{};
     auto noise_image = make_noise_image(noise, true);
+
+    Roguelike_Map_Path rmp;
+    auto rmp_fb = make_framebuffer_target({700, 700}); 
+    make_roguelike_map_path(rmp);
+    draw_roguelike_map_path(rmp_fb, rmp, basic_shader);
 
     f64 total_time = 0.;
     auto &io = gui::GetIO();
@@ -683,7 +939,24 @@ int main(int, char **) {
         gui::Text("Note: A seed of 0 will randomly generate one");
         constexpr const char *seed_hint = "A seed of 0 will randomly generate one";
         if (gui::BeginTable("split", 2)) {            
-            
+            gui::TableNextColumn();
+            {
+                draw_image(rmp_fb.color);
+                gui::TableNextColumn();
+                gui::Text("Path");
+                bool changed = false;
+                bool redraw = false;
+                static int max_path_count = 4;
+                // gui::Button("next iteration##PATH");
+                changed |= gui::Button("Generate##PATH");
+                changed |= gui::SliderInt("Max Path Count##PATH", &max_path_count, 1, 5);
+                if(changed) {
+                    make_roguelike_map_path(rmp);
+                    draw_roguelike_map_path(rmp_fb, rmp, basic_shader, max_path_count);
+                } else if(redraw) {
+                    // draw_roguelike_map_path(rmp_fb, rmp, basic_shader, max_path_count);
+                }
+            }
             gui::TableNextColumn();
             {
                 draw_image(dm_fb.color);

@@ -97,9 +97,7 @@ void _internal_crash(const std::string &file_name, int line, const std::string &
 
 #define ForRange(I, S, N) for(typename std::remove_const<decltype(N)>::type I = S; I < N; ++I)
 #define For(IT, IDX, A) for(auto [IT, IDX] = std::tuple{A.begin(), 0}; IDX < A.size(); ++IDX, ++IT)
-// #define For(IT, A) for(auto IT = A.begin(); IT != A.end(); ++IT)
-// #define ForRef(IT, A) for(auto [PIT, IT] = std::tuple{A.begin(), &**A.begin()}; PIT != A.end(); IT = &**(++PIT))
-// #define ForMap(VAL, KEY, A) for(auto &[KEY, VAL]: A)
+
 
 
 

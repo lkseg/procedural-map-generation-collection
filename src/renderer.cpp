@@ -90,6 +90,9 @@ void push_line(Array<Vec3> &vert, Array<u32> &ind, Vec2 a, Vec2 b, f32 width) {
     push_tri(vert, ind, bf[2], bf[1], bf[0]);
     push_tri(vert, ind, bf[5], bf[4], bf[3]);
 }
+void push_line(Basic_Mesh &mesh, Vec2 a, Vec2 b, f32 width) {
+    push_line(mesh.vertices, mesh.indices, a, b, width);
+}
 
 Render_Object make_render_object(Array<Vec3> &positions, Array<u32> &indices) {
     u32 VBO, VAO, EBO;

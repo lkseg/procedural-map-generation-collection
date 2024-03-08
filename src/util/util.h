@@ -78,6 +78,7 @@ using std::to_string;
 using std::find;
 using std::find_if;
 using std::swap;
+using std::move;
 
 template<typename T>
 inline String str(const T &v) {
@@ -117,6 +118,10 @@ struct Array {
 	inline void resize(isize count) {
 		assert(count >= 0);
 		data.resize(count);
+	}
+	inline void reserve(isize count) {
+		assert(count >= 0);
+		data.reserve(count);
 	}
 	inline void clear() {
 		data.clear();
@@ -292,8 +297,8 @@ inline T min(const T &a, const T &b, const T &c, const T &d) {
 }
 
 #define swap_values(A, B) auto _D = A; A = B; B = _D
-bool approx(f32, f32);
-bool approx(f64, f64);
+bool approx(f32, f32, f32 delta = 0.001);
+bool approx(f64, f64, f64 delta = 0.001);
 
 template<typename D, typename B> 
 void assign_base(D &derived, B &base) {
@@ -444,9 +449,17 @@ struct std::hash<Pair<K, V>> {
 	}
 };
 
-inline String internal_debug_log;
-inline void debug_log(const String &s) {
-	internal_debug_log += s;
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const Set<T> &arr) {
+	os << "Set {";
+	
+	for(auto &v: arr) {
+		os << v << ", ";
+	}
+		
+	os << "}";
+	return os;
 }
+
 // typedef std::string StdString;
 #endif // UTIL_H

@@ -28,7 +28,7 @@ Color scale_rgb(const Color &, f32);
 // scale_rgb
 Color operator*(const Color &, f32);
 
-Maybe<Texture> load_texture(const String &);
+Maybe<Texture> load_texture_from_file(const String &);
 Maybe<Texture> load_texture(byte *, i32, i32);
 void destroy_texture(Texture &);
 

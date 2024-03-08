@@ -5,6 +5,23 @@
 
 Assets ats = {};
 
+const Texture &get_texture(const String &name) {
+    assert(ats.textures.contains(name));
+    return ats.textures[name];
+}
+Texture load_texture(const String &file, const String &name) {
+    auto tex = load_texture_from_file(file);
+    if(!tex.has_value()) {
+        panic("Couldn't load texture " + file);
+    }
+    if(name.empty()) {
+        ats.textures[file] = *tex;
+    } else {
+        ats.textures[name] = *tex;
+    }
+    return *tex;
+}
+
 void assets_destroy() {
     for(auto &[name, shader]: ats.shaders) {
         destroy_and_unload(*shader);

@@ -84,7 +84,7 @@ VriGraph make_voronoi_random_points(int width, int height, int count, VriPoint *
 }
 
 
-VriGraph make_voronoi_from_points(int count, int num_relax, VriPoint *points) {
+VriGraph make_voronoi_from_points(VriPoint *points, int count, int num_relax) {
     RawGraph r = make_raw_voronoi_from_points(count, num_relax, points);
     VriGraph g = make_voronoi_graph(&r);    
     soft_free_raw_graph(&r);
