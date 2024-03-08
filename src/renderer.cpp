@@ -33,7 +33,7 @@ void draw(const Render_Object &ro) {
 
 Render_Object make_render_object() {
     constexpr f32 F = 0.5;
-	Vertex vertices[] = {       
+    Vertex vertices[] = {       
         Vertex{{-F,  F, 0.0},   {1.0, 1.0, 0.0},    {0.0, 1.0}},
         Vertex{{ F,  F, 0.0},   {1.0, 0.0, 0.0},    {1.0, 1.0}},
         Vertex{{-F, -F, 0.0},   {0.0, 0.0, 1.0},    {0.0, 0.0}},
@@ -73,7 +73,7 @@ Render_Object make_render_object() {
     // Just remove?
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0);
-	return {.internal = VAO, .ebo = EBO, .vbo = VBO, .indices_count = 6};
+    return {.internal = VAO, .ebo = EBO, .vbo = VBO, .indices_count = 6};
 }
 
 void make_line(Buffer<Vec3, 6> &buffer, Vec2 a, Vec2 b, f32 width) {
@@ -125,49 +125,49 @@ void push_tri(Array<Vec3> &positions, Array<u32> &indices, Vec3 a, Vec3 b, Vec3 
     }
 }
 Framebuffer make_framebuffer() {
-	GLuint fb = 0;
+    GLuint fb = 0;
     // @todo?
-	// defer(glDeleteFramebuffers(1, &fb));
+    // defer(glDeleteFramebuffers(1, &fb));
 
-	glGenFramebuffers(1, &fb);
-	glBindFramebuffer(GL_FRAMEBUFFER, fb);
-	return {fb};
+    glGenFramebuffers(1, &fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb);
+    return {fb};
 }
 Framebuffer make_framebuffer_target(Vec2i size) {
     auto fb = make_framebuffer();
     
     glBindFramebuffer(GL_FRAMEBUFFER, fb.internal);
 
-	GLuint target;
-	glGenTextures(1, &target);
-	
-	glBindTexture(GL_TEXTURE_2D, target);
-	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    GLuint target;
+    glGenTextures(1, &target);
+    
+    glBindTexture(GL_TEXTURE_2D, target);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);    
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target, 0);
-	
-	GLuint rbo;
+    
+    GLuint rbo;
     // @todo?
-	// defer(glDeleteRenderbuffers(1, &rbo));
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.x, size.y); 
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); 
+    // defer(glDeleteRenderbuffers(1, &rbo));
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.x, size.y); 
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); 
     // glBindFramebuffer(GL_FRAMEBUFFER, fb);
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) panic("Bad gl init");
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) panic("Bad gl init");
     fb.has_target = true;
     fb.color = Texture{.internal = target, .size = {size.x, size.y}};
     fb.rbo = rbo;
     // draw buffers? @todo
-	// auto buffers = to_buffer<GLenum, 1>({GL_COLOR_ATTACHMENT0});
-	// glDrawBuffers(buffers.size(), &buffers[0]); 
+    // auto buffers = to_buffer<GLenum, 1>({GL_COLOR_ATTACHMENT0});
+    // glDrawBuffers(buffers.size(), &buffers[0]); 
     return fb;
 }
 
@@ -176,10 +176,10 @@ void use_main_framebuffer() {
     gl_state.framebuffer = 0;
 }
 void use_framebuffer(const Framebuffer &fb) {
-	glBindFramebuffer(GL_FRAMEBUFFER, fb.internal);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb.internal);
     gl_state.framebuffer = fb.internal;
     glClearColor(fb.modulate.x, fb.modulate.y, fb.modulate.z, fb.modulate.w);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(fb.has_target) {
         glViewport(0, 0, fb.color.size.x, fb.color.size.y);
     }
@@ -202,8 +202,8 @@ Texture draw_texture(Render_Object &ro, Framebuffer fb, Vec2 position, Vec2 scal
     assert(gl_state.framebuffer == fb.internal, "Framebuffer not set");
     // glBindFramebuffer(GL_FRAMEBUFFER, fb.internal);		
     // glDisable(GL_DEPTH_TEST);
-    	
-	use_shader(shader);
+        
+    use_shader(shader);
     if(texture) {
         glBindTexture(GL_TEXTURE_2D, texture->internal);    
     }
@@ -228,7 +228,7 @@ Texture draw_texture(Render_Object &ro, Framebuffer fb, Vec2 position, Vec2 scal
     set_uniform(shader, "u_color", color_vec4(color));
     // glUseProgram(0);
     draw(ro);	
-	return fb.color;
+    return fb.color;
 }
 
 Vec3 color_vec3(Color c) {

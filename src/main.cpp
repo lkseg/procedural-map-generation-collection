@@ -561,19 +561,19 @@ struct Noise_Generator {
     FastNoiseLite internal;
     u64 seed = 1;
     f32 freq = 0.01;
-	f32 gain = 0.5;
-	int octaves = 5; 
-	f32 lacunarity = 2;
+    f32 gain = 0.5;
+    int octaves = 5; 
+    f32 lacunarity = 2;
     FastNoiseLite::NoiseType noise_type = FastNoiseLite::NoiseType::NoiseType_OpenSimplex2;
-	FastNoiseLite::FractalType fractal_type = FastNoiseLite::FractalType::FractalType_FBm;	
+    FastNoiseLite::FractalType fractal_type = FastNoiseLite::FractalType::FractalType_FBm;	
     void update() {
         internal.SetFrequency(freq);
-		internal.SetFractalLacunarity(lacunarity);
-		internal.SetFractalGain(gain);
-		internal.SetFractalOctaves(octaves);
-		internal.SetNoiseType(noise_type);
-		internal.SetFractalType(fractal_type);
-		internal.SetSeed(seed);
+        internal.SetFractalLacunarity(lacunarity);
+        internal.SetFractalGain(gain);
+        internal.SetFractalOctaves(octaves);
+        internal.SetNoiseType(noise_type);
+        internal.SetFractalType(fractal_type);
+        internal.SetSeed(seed);
     }
     Noise_Generator() {
         update();        
@@ -1143,8 +1143,8 @@ int main(int, char **) {
         // glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         // glClear(GL_COLOR_BUFFER_BIT);
         // use_shader(fb_shader);
-		// glActiveTexture(GL_TEXTURE0);
-		// glBindTexture(GL_TEXTURE_2D, tbuffer.color.internal);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, tbuffer.color.internal);
         // auto ro = make_render_object();
         // defer(destroy(ro));
         // draw(ro);
